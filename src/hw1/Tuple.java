@@ -10,18 +10,23 @@ import java.util.HashMap;
  *
  */
 public class Tuple {
+	private TupleDesc TD;  // how to do the mapping
+	private int pageID; 
+	private int tupID; 
+	private Field[] fields; 
 	
 	/**
 	 * Creates a new tuple with the given description
 	 * @param t the schema for this tuple
 	 */
 	public Tuple(TupleDesc t) {
-		//your code here
+		 this.TD = t; 
+		 this.fields = new Field[t.numFields()] ;
 	}
 	
 	public TupleDesc getDesc() {
 		//your code here
-		return null;
+		return this.TD;
 	}
 	
 	/**
@@ -30,12 +35,14 @@ public class Tuple {
 	 */
 	public int getPid() {
 		//your code here
-		return 0;
+		return this.pageID;
 	}
 
 	public void setPid(int pid) {
 		//your code here
+		this.pageID = pid; 
 	}
+	
 
 	/**
 	 * retrieves the tuple (slot) id of this tuple
@@ -43,15 +50,18 @@ public class Tuple {
 	 */
 	public int getId() {
 		//your code here
-		return 0;
+	 return this.tupID;
 	}
 
 	public void setId(int id) {
 		//your code here
+		 this.tupID = id; 
 	}
 	
 	public void setDesc(TupleDesc td) {
 		//your code here;
+		
+		this.TD = td; 
 	}
 	
 	/**
@@ -61,11 +71,12 @@ public class Tuple {
 	 */
 	public void setField(int i, Field v) {
 		//your code here
+		this.fields[i] = v; 
 	}
 	
 	public Field getField(int i) {
 		//your code here
-		return null;
+		return fields[i];
 	}
 	
 	/**
@@ -74,8 +85,19 @@ public class Tuple {
 	 * the String columns to readable text).
 	 */
 	public String toString() {
-		//your code here
-		return "";
+		String theString = ""; 
+		for (int i = 0; i < fields.length; i++) {
+			// type.int is how we ge to that enum
+			if (this.TD.getType(i) == Type.INT) {
+				theString += (IntField)fields[i]; 
+			}
+			
+			else {
+				theString += (StringField)fields[i]; 
+			}
+		}
+		return theString;
 	}
+	
 }
 	

@@ -19,7 +19,6 @@ public class HeapPage {
 	private int tableId;
 
 
-
 	public HeapPage(int id, byte[] data, int tableId) throws IOException {
 		this.id = id;
 		this.tableId = tableId;
@@ -46,7 +45,7 @@ public class HeapPage {
 
 	public int getId() {
 		//your code here
-		return 0;
+	 return this.id;
 	}
 
 	/**
@@ -56,7 +55,7 @@ public class HeapPage {
 	 */
 	public int getNumSlots() {
 		//your code here
-		return 0;
+		 return (HeapFile.PAGE_SIZE*8)/((td.getSize()*8)+1);
 	}
 
 	/**
@@ -65,7 +64,8 @@ public class HeapPage {
 	 */
 	private int getHeaderSize() {        
 		//your code here
-		return 0;
+		int slotNums = this.numSlots;
+		return slotNums % 8 == 0 ? slotNums / 8 : slotNums / 8 + 1;	
 	}
 
 	/**
@@ -75,6 +75,9 @@ public class HeapPage {
 	 */
 	public boolean slotOccupied(int s) {
 		//your code here
+		if((header[s/8] >> s%8 & 1)==1) {
+			return true;
+		}
 		return false;
 	}
 
@@ -85,6 +88,13 @@ public class HeapPage {
 	 */
 	public void setSlotOccupied(int s, boolean value) {
 		//your code here
+		if (value) {
+			header[s/8] = (byte) (header[s/8] | (1 << (s%8)));
+		}
+		else {
+			header[s/8] = (byte) (header[s/8] & ~(1 << (s%8)));
+		}
+		
 	}
 	
 	/**
@@ -95,7 +105,21 @@ public class HeapPage {
 	 */
 	public void addTuple(Tuple t) throws Exception {
 		//your code here
+		if (!t.getDesc().equals(this.td))
+			throw new Exception();
+
+		for (int i = 0; i < this.numSlots; i++) {
+			if (!slotOccupied(i)) {
+				setSlotOccupied(i, true);
+				t.setPid(this.id);
+				t.setId(i);
+				this.tuples[i] = t;
+				return;
+			}
+		}
+		throw new Exception();
 	}
+	
 
 	/**
 	 * Removes the given Tuple from the page. If the page id from the tuple does not match this page, throw
@@ -105,6 +129,17 @@ public class HeapPage {
 	 */
 	public void deleteTuple(Tuple t) {
 		//your code here
+		int n  = getNumSlots();
+		for (int i = 0;i<n;i++) {
+			if(slotOccupied(i)) {
+				if(tuples[i].getDesc().equals(t.getDesc()) && t.getPid()==tuples[i].getPid()) {
+					setSlotOccupied(i,false);
+					return;
+				}
+			}
+		}
+		throw new NoSuchElementException();
+		
 	}
 	
 	/**
@@ -232,6 +267,25 @@ public class HeapPage {
 	 */
 	public Iterator<Tuple> iterator() {
 		//your code here
-		return null;
+		ArrayList<Tuple> myList = new ArrayList<Tuple>();
+        for (int i = 0; i < numSlots; i ++) {
+            if (slotOccupied(i)) myList.add(tuples[i]);
+        }
+        return myList.iterator();
+	}
+	
+	
+
+
+	public boolean Occ() { //ADDED code here
+
+			for (int i = 0; i < this.numSlots; i++) {
+				if (!slotOccupied(i)) {
+					return true;
+				}
+			}
+			return false;
+		
+	
 	}
 }
