@@ -40,7 +40,7 @@ public class Aggregator {
 		Field theField = null;
 		tuple.add(t);
 		if(groupb == true){
-			//String case
+			
 			if(theType == Type.INT){
 				if(help.contains(mergeHelper(t, theField, theType))){
 
@@ -60,13 +60,16 @@ public class Aggregator {
 	private Tuple mergeHelper(Tuple t, Field theField, Type theType) {
 		byte[] info = t.getField(0).toByteArray();
 
-
+		// creates a new field
 		if(theType == Type.STRING) {
 			theField = new StringField(info);
-		}else {
+		}
+		else {
 			theField = new IntField(info);
 		}
 		Tuple newTuple = new Tuple(tD);
+		
+		// puts the field in the tuple
 		newTuple.setField(0, theField);
 		return newTuple;
 	}
@@ -79,7 +82,8 @@ public class Aggregator {
 
 
 		ArrayList<Tuple> result = new ArrayList<Tuple>();
-
+		
+		//what to do when it summed 
 		if(agop == AggregateOperator.SUM) {
 			int sum = 0;
 			if(groupb == true) {
@@ -89,11 +93,13 @@ public class Aggregator {
 				String[] fields = new String[] { tD.getFieldName(0), "SUM" };
 				TupleDesc newTD = new TupleDesc(types, fields);
 
-
+				
+				//both integers
 				if (tD.getType(0) == Type.INT && tD.getType(1) == Type.INT) {
-					Map<Integer, Integer> name = new HashMap<>(); // First int represents name, sencond int represents index
-					for(int i=0; i<tuple.size(); i++) {
-						//Judge whether the name in the Map or not
+					Map<Integer, Integer> name = new HashMap<>(); 
+					for(int i=0; i < tuple.size(); i++) {
+						
+						// 2 diff helpers for if it has the key or not 
 						if (name.containsKey(tuple.get(i).getField(0).hashCode())) {
 							sumHelperInt(tuple.get(i), name, list);
 						}
@@ -102,10 +108,12 @@ public class Aggregator {
 						}
 					}
 				} 
+				
+				//one string and one int
 				else if (tD.getType(0) == Type.STRING && tD.getType(1) == Type.INT) {
-					Map<String, Integer> name = new HashMap<>(); //The String represents name, the Int represents index
+					Map<String, Integer> name = new HashMap<>(); 
 					for (int i=0; i<tuple.size(); i++) {
-						//Judge whether the name in the Map or not
+						
 						if (name.containsKey(tuple.get(i).getField(0).toString())) {
 							sumHelperString(tuple.get(i), name, list);
 						} 
@@ -119,9 +127,9 @@ public class Aggregator {
 
 			else {		
 				for(int i=0; i<tuple.size(); i++) {
-					Type a = tuple.get(i).getDesc().getType(0);
+					Type x = tuple.get(i).getDesc().getType(0);
 
-					if(!a.equals(Type.STRING)) {
+					if(!x.equals(Type.STRING)) {
 						int value = ((IntField) tuple.get(i).getField(0)).getValue();
 						sum = sum + value;
 					}
@@ -133,21 +141,23 @@ public class Aggregator {
 		if(agop == AggregateOperator.COUNT){
 
 			if(groupb == false){
-				int ans = 0;
+				int theResult = 0;
 				int len = tuple.size();
 				for(int i=0; i<len; i++){
-					ans++;
+					theResult++;
 				}
-				result.add(countHelperb(ans));
+				result.add(countHelperb(theResult));
 			}
 			else {
+				// if we are grouping 
 				for(int i=0; i<help.size(); i++) {
-					int ans = 0;
+					int theResult = 0;
+					
 					for(int j=0; j<tuple.size(); j++) {
 						if(tuple.get(j).equals(help.get(i))) {
-							ans++;
+							theResult++;
 						}
-						result.add(countHelper(i, ans));
+						result.add(countHelper(i, theResult));
 					}
 				}
 			}
@@ -156,48 +166,51 @@ public class Aggregator {
 
 
 		if(agop == AggregateOperator.AVG) {
-			//group by case
+			
 			if (groupb == true) {
-				for(int i=0; i<help.size(); i++) {
+				for(int i=0; i < help.size(); i++) {
 					int sum = 0;
-					int size = 0;
-					int avg = 0;
-					Type a = help.get(i).getDesc().getType(0);
+					
+					Type x = help.get(i).getDesc().getType(0);
 
-					if(!a.equals(Type.STRING)) {
+					if(!x.equals(Type.STRING)) {
+						//if it's not a string it's an int 
 						IntField intValueA = (IntField) help.get(i).getField(0);
 						int actValueA = intValueA.getValue();
-						for(int j=0; j<tuple.size(); j++) {
-							Type b = tuple.get(j).getDesc().getType(0);
-							if(b == Type.INT) {
+						
+						for(int j=0; j < tuple.size(); j++) {
+							
+							Type y = tuple.get(j).getDesc().getType(0);
+							if(y == Type.INT) {
 								IntField intValueB = (IntField) tuple.get(j).getField(0);
 								int actValueB = intValueB.getValue();
 								if(actValueA == actValueB) {
 									IntField comValue = (IntField) tuple.get(j).getField(1);
 									int valb = comValue.getValue();
 									sum = sum + valb;
-									size++;
+									
 								}
 							}
 						}
 					}
-					avg = sum/size;
-					result.add(countHelper(i, avg));
+					int ave = sum/(tuple.size());
+					result.add(countHelper(i, ave));
 				}
 			} else {
 				int sum = 0;
-				int avg = 0;
+			
 				Tuple ans = new Tuple(tD);
-
-
-				for(int i=0; i<tuple.size(); i++) {
+				for(int i=0; i< tuple.size(); i++) {
+					
 					int temp = tuple.get(i).getField(0).hashCode();
 					sum = sum + temp;
 				}
 
-				avg = sum / tuple.size();
-				IntField intfield = new IntField(avg);
+				int ave = sum / tuple.size();
+				IntField intfield = new IntField(ave);
 				ans.setField(0, intfield);
+				
+				// add the tuple with an int field that is the average to the result tuple list 
 				result.add(ans);
 			}
 		}
@@ -205,40 +218,28 @@ public class Aggregator {
 
 		if(agop == AggregateOperator.MIN) {
 			if(groupb == false) {
-				int min = Integer.MAX_VALUE;
+				int min = Integer.MIN_VALUE;
 
 				String theString = "";
-				Type a = tuple.get(0).getField(0).getType();
-				if(!a.equals(Type.INT)) {
+				Type x = tuple.get(0).getField(0).getType();
+				if(!x.equals(Type.INT)) {
 
 					theString = ((StringField) tuple.get(0).getField(0)).toString();
 				}
 
-				for(int i=0; i<tuple.size(); i++) {
-					Type b = tuple.get(i).getDesc().getType(0);
-					if(b.equals(Type.STRING)) {//String case
-						valueHelper(i, theString);
-					}
-					else {
-						IntField intField = new IntField(tuple.get(i).getField(0).toByteArray());
-						int actValue1 = intField.getValue();
-						if(min > actValue1) {
-							min = actValue1;
-						}
-					}
-				}
-				//Judge and return the right type
-				if(a.equals(Type.INT)) {
+				
+				if(x.equals(Type.INT)) {
 					result.add(maxMinInt(min));
 				}else {
 					result.add(maxMinString(theString));
 				}
-			}else {
-				int min = Integer.MAX_VALUE;
+			}
+			else {
+				int min = Integer.MIN_VALUE;
 
 				String theString = "";
-				Type a = tuple.get(0).getField(0).getType();
-				if(!a.equals(Type.INT)) {
+				Type x = tuple.get(0).getField(0).getType();
+				if(!x.equals(Type.INT)) {
 
 					theString = ((StringField) tuple.get(0).getField(0)).toString();
 				}
@@ -248,8 +249,8 @@ public class Aggregator {
 					int actValueA = valueIntA.getValue();
 
 					for(int j=0; j<tuple.size(); j++) {
-						Type b = tuple.get(j).getDesc().getType(0);
-						if(b == Type.INT) {
+						Type y = tuple.get(j).getDesc().getType(0);
+						if(y == Type.INT) {
 							IntField intValueB = (IntField) tuple.get(j).getField(0);
 							int actValueB = intValueB.getValue();
 							if(actValueB == actValueA) {
@@ -259,11 +260,13 @@ public class Aggregator {
 									min = valuec;
 								}
 							}
-						}else {//String case
-							stringHelper(j, theString);
+						}
+						
+						else {
+							valueHelper(j, theString);
 						}
 					}
-					if(a.equals(Type.INT)) {
+					if(x.equals(Type.INT)) {
 						result.add(maxMinIntHelper(i, min));
 					}else {
 						result.add(maxMinStringHelper(i, theString));
@@ -275,40 +278,28 @@ public class Aggregator {
 		if(agop == AggregateOperator.MAX) {
 
 			if(groupb == false) {
-				int max = Integer.MIN_VALUE;
-
-
+				int max = Integer.MAX_VALUE;
 				String theString = "";
-				Type a = tuple.get(0).getField(0).getType();
-				if(!a.equals(Type.INT)) {
+				Type x = tuple.get(0).getField(0).getType();
+				
+				if(!x.equals(Type.INT)) {
 					theString = ((StringField) tuple.get(0).getField(0)).toString();
 				}
 
-				for(int i=0; i<tuple.size(); i++) {
-					Type b = tuple.get(i).getDesc().getType(0);
-					if(b.equals(Type.STRING)) {
-						valueHelper(i, theString);
-					}
-					else {
-						IntField intField = new IntField(tuple.get(i).getField(0).toByteArray());
-						int actValue = intField.getValue();
-						if(max < actValue) {
-							max = actValue;
-						}
-					}
-				}
-
-				if(a.equals(Type.INT)) {
+				if(x.equals(Type.INT)) {
 					result.add(maxMinInt(max));
-				}else {
+				}
+				
+				else {
 					result.add(maxMinString(theString));
 				}
-			}else {
-				int max = Integer.MIN_VALUE;
+			}
+			else {
+				int max = Integer.MAX_VALUE;
 
 				String theString = "";
-				Type a = tuple.get(0).getField(0).getType();
-				if(!a.equals(Type.INT)) {
+				Type x = tuple.get(0).getField(0).getType();
+				if(!x.equals(Type.INT)) {
 
 					theString = ((StringField) tuple.get(0).getField(0)).toString();
 				}
@@ -318,8 +309,9 @@ public class Aggregator {
 					int actValueA = valueIntA.getValue();
 
 					for(int j=0; j<tuple.size(); j++) {
-						Type b = tuple.get(j).getDesc().getType(0);
-						if(b == Type.INT) {
+						Type y = tuple.get(j).getDesc().getType(0);
+						
+						if(y == Type.INT) {
 							IntField valueIntB = (IntField) tuple.get(j).getField(0);
 							int actValueB = valueIntB.getValue();
 
@@ -331,12 +323,12 @@ public class Aggregator {
 								}
 							}
 						}else {
-							stringHelper(j, theString);
+							valueHelper(j, theString);
 						}
 					}
 
 
-					if(a.equals(Type.INT)) {
+					if(x.equals(Type.INT)) {
 						result.add(maxMinIntHelper(i, max));
 					}else {
 						result.add(maxMinStringHelper(i, theString));
@@ -362,19 +354,12 @@ public class Aggregator {
 	private void valueHelper(int i, String theString) {
 		StringField value = (StringField) tuple.get(i).getField(0);
 		String theValue = value.toString();
-		if(theValue.compareTo(theString) == 1) {
+		if(theValue.equals(theString)) {
 			theString = theValue;
 		}
 	}
 
-	private void stringHelper(int j, String theString) {
-		StringField stringField = (StringField) tuple.get(j).getField(1);
-		String stringValue = stringField.toString();
-		if(stringValue.compareTo(theString)==1) theString = stringValue;
-	}
-
-
-
+	
 
 	private Tuple maxMinStringHelper(int i, String theString) {
 		Tuple maxMinTuple = new Tuple(tD);
@@ -385,11 +370,11 @@ public class Aggregator {
 	}	
 
 
-	private Tuple maxMinString(String firstValue) {
-		Tuple maxminTuple = new Tuple(tD);
-		StringField stringMaxmin = new StringField(firstValue);
-		maxminTuple.setField(0, stringMaxmin);
-		return maxminTuple;
+	private Tuple maxMinString(String theString) {
+		Tuple maxMinTuple = new Tuple(tD);
+		StringField stringMaxMin = new StringField(theString);
+		maxMinTuple.setField(0, stringMaxMin);
+		return maxMinTuple;
 	}
 
 	private Tuple maxMinInt(int maxMin) {
@@ -402,11 +387,11 @@ public class Aggregator {
 
 	private Tuple countHelper(int i, int given) {
 		
-		IntField a = new IntField(given);
+		IntField x = new IntField(given);
 		
 		Tuple newTuple = new Tuple(tD);
 		newTuple.setField(0, help.get(i).getField(0));
-		newTuple.setField(1, a);
+		newTuple.setField(1, x);
 		return newTuple;
 	}
 
@@ -418,6 +403,25 @@ public class Aggregator {
 		return newTuple;
 	}
 
+	
+	
+	private void sumHelperString(Tuple t, Map<String, Integer> nameSpace, ArrayList<Tuple> list) {
+		int index = nameSpace.get(t.getField(0).hashCode());
+		Tuple temp = list.get(index);
+		IntField theIF = new IntField(t.getField(1).hashCode() + temp.getField(1).hashCode());
+		temp.setField(1, theIF);
+	}
+
+	
+	// some of these helper could be if statement above but making them helpers makes the above code a bit less clunky
+	private void sumHelperStringb(int i, ArrayList<Tuple> theList, Map<String, Integer> name, TupleDesc newTD) {
+		Tuple newTuple = new Tuple(newTD);
+		newTuple.setField(0, tuple.get(i).getField(0));
+		newTuple.setField(1, tuple.get(i).getField(1));
+		theList.add(newTuple);
+		name.put(newTuple.getField(0).toString(), theList.size() - 1);
+	}
+	
 	private void sumHelperInt(Tuple t, Map<Integer, Integer> name, ArrayList<Tuple> list) {
 		
 		int index = name.get(t.getField(0).hashCode());
@@ -435,22 +439,7 @@ public class Aggregator {
 		name.put(newTuple.getField(0).hashCode(), list.size() - 1);
 	}
 	
-	private void sumHelperString(Tuple t, Map<String, Integer> nameSpace, ArrayList<Tuple> list) {
-		int index = nameSpace.get(t.getField(0).hashCode());
-		Tuple temp = list.get(index);
-		IntField theIF = new IntField(t.getField(1).hashCode() + temp.getField(1).hashCode());
-		temp.setField(1, theIF);
-	}
-
 	
-
-	private void sumHelperStringb(int i, ArrayList<Tuple> theList, Map<String, Integer> name, TupleDesc newTD) {
-		Tuple newTuple = new Tuple(newTD);
-		newTuple.setField(0, tuple.get(i).getField(0));
-		newTuple.setField(1, tuple.get(i).getField(1));
-		theList.add(newTuple);
-		name.put(newTuple.getField(0).toString(), theList.size() - 1);
-	}
 
 
 }
