@@ -3,6 +3,7 @@ package hw1;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 
 /**
  * A class to perform various aggregations, by accepting one tuple at a time
@@ -11,8 +12,20 @@ import java.util.Iterator;
  */
 public class Aggregator {
 
+	private AggregateOperator agop; 
+	private boolean groupb; 
+	private TupleDesc tD; 
+
+	ArrayList<Tuple> tuple = new ArrayList<Tuple>();
+	ArrayList<Tuple> help = new ArrayList<Tuple>();
+
+
 	public Aggregator(AggregateOperator o, boolean groupBy, TupleDesc td) {
 		//your code here
+
+		this.agop = o; 
+		this.groupb = groupBy; 
+		this.tD = td; 
 
 	}
 
@@ -21,16 +34,423 @@ public class Aggregator {
 	 * @param t the tuple to be aggregated
 	 */
 	public void merge(Tuple t) {
-		//your code here
+
+
+		Type theType = t.getDesc().getType(0);
+		Field theField = null;
+		tuple.add(t);
+		if(groupb == true){
+			//String case
+			if(theType == Type.INT){
+				if(help.contains(mergeHelper(t, theField, theType))){
+
+				}
+				else{
+					help.add(mergeHelper(t, theField, theType));
+				}
+				help.add(mergeHelper(t, theField, theType));			
+			}
+
+			else{
+				help.add(mergeHelper(t, theField, theType));
+			}
+		}
 	}
-	
+
+	private Tuple mergeHelper(Tuple t, Field theField, Type theType) {
+		byte[] info = t.getField(0).toByteArray();
+
+
+		if(theType == Type.STRING) {
+			theField = new StringField(info);
+		}else {
+			theField = new IntField(info);
+		}
+		Tuple newTuple = new Tuple(tD);
+		newTuple.setField(0, theField);
+		return newTuple;
+	}
+
 	/**
 	 * Returns the result of the aggregation
 	 * @return a list containing the tuples after aggregation
 	 */
 	public ArrayList<Tuple> getResults() {
-		//your code here
-		return null;
+
+
+		ArrayList<Tuple> result = new ArrayList<Tuple>();
+
+		if(agop == AggregateOperator.SUM) {
+			int sum = 0;
+			if(groupb == true) {
+
+				ArrayList<Tuple> list = new ArrayList<>();
+				Type[] types = new Type[] { tD.getType(0), Type.INT };
+				String[] fields = new String[] { tD.getFieldName(0), "SUM" };
+				TupleDesc newTD = new TupleDesc(types, fields);
+
+
+				if (tD.getType(0) == Type.INT && tD.getType(1) == Type.INT) {
+					Map<Integer, Integer> name = new HashMap<>(); // First int represents name, sencond int represents index
+					for(int i=0; i<tuple.size(); i++) {
+						//Judge whether the name in the Map or not
+						if (name.containsKey(tuple.get(i).getField(0).hashCode())) {
+							sumHelperInt(tuple.get(i), name, list);
+						}
+						else {
+							sumHelperIntb(i, list, name, newTD);
+						}
+					}
+				} 
+				else if (tD.getType(0) == Type.STRING && tD.getType(1) == Type.INT) {
+					Map<String, Integer> name = new HashMap<>(); //The String represents name, the Int represents index
+					for (int i=0; i<tuple.size(); i++) {
+						//Judge whether the name in the Map or not
+						if (name.containsKey(tuple.get(i).getField(0).toString())) {
+							sumHelperString(tuple.get(i), name, list);
+						} 
+						else {
+							sumHelperStringb(i, list, name, newTD);
+						}
+					}
+				}
+				return list;
+			}
+
+			else {		
+				for(int i=0; i<tuple.size(); i++) {
+					Type a = tuple.get(i).getDesc().getType(0);
+
+					if(!a.equals(Type.STRING)) {
+						int value = ((IntField) tuple.get(i).getField(0)).getValue();
+						sum = sum + value;
+					}
+				}
+				result.add(countHelperb(sum));
+			}
+		}
+
+		if(agop == AggregateOperator.COUNT){
+
+			if(groupb == false){
+				int ans = 0;
+				int len = tuple.size();
+				for(int i=0; i<len; i++){
+					ans++;
+				}
+				result.add(countHelperb(ans));
+			}
+			else {
+				for(int i=0; i<help.size(); i++) {
+					int ans = 0;
+					for(int j=0; j<tuple.size(); j++) {
+						if(tuple.get(j).equals(help.get(i))) {
+							ans++;
+						}
+						result.add(countHelper(i, ans));
+					}
+				}
+			}
+		}
+
+
+
+		if(agop == AggregateOperator.AVG) {
+			//group by case
+			if (groupb == true) {
+				for(int i=0; i<help.size(); i++) {
+					int sum = 0;
+					int size = 0;
+					int avg = 0;
+					Type a = help.get(i).getDesc().getType(0);
+
+					if(!a.equals(Type.STRING)) {
+						IntField intValueA = (IntField) help.get(i).getField(0);
+						int actValueA = intValueA.getValue();
+						for(int j=0; j<tuple.size(); j++) {
+							Type b = tuple.get(j).getDesc().getType(0);
+							if(b == Type.INT) {
+								IntField intValueB = (IntField) tuple.get(j).getField(0);
+								int actValueB = intValueB.getValue();
+								if(actValueA == actValueB) {
+									IntField comValue = (IntField) tuple.get(j).getField(1);
+									int valb = comValue.getValue();
+									sum = sum + valb;
+									size++;
+								}
+							}
+						}
+					}
+					avg = sum/size;
+					result.add(countHelper(i, avg));
+				}
+			} else {
+				int sum = 0;
+				int avg = 0;
+				Tuple ans = new Tuple(tD);
+
+
+				for(int i=0; i<tuple.size(); i++) {
+					int temp = tuple.get(i).getField(0).hashCode();
+					sum = sum + temp;
+				}
+
+				avg = sum / tuple.size();
+				IntField intfield = new IntField(avg);
+				ans.setField(0, intfield);
+				result.add(ans);
+			}
+		}
+
+
+		if(agop == AggregateOperator.MIN) {
+			if(groupb == false) {
+				int min = Integer.MAX_VALUE;
+
+				String theString = "";
+				Type a = tuple.get(0).getField(0).getType();
+				if(!a.equals(Type.INT)) {
+
+					theString = ((StringField) tuple.get(0).getField(0)).toString();
+				}
+
+				for(int i=0; i<tuple.size(); i++) {
+					Type b = tuple.get(i).getDesc().getType(0);
+					if(b.equals(Type.STRING)) {//String case
+						valueHelper(i, theString);
+					}
+					else {
+						IntField intField = new IntField(tuple.get(i).getField(0).toByteArray());
+						int actValue1 = intField.getValue();
+						if(min > actValue1) {
+							min = actValue1;
+						}
+					}
+				}
+				//Judge and return the right type
+				if(a.equals(Type.INT)) {
+					result.add(maxMinInt(min));
+				}else {
+					result.add(maxMinString(theString));
+				}
+			}else {
+				int min = Integer.MAX_VALUE;
+
+				String theString = "";
+				Type a = tuple.get(0).getField(0).getType();
+				if(!a.equals(Type.INT)) {
+
+					theString = ((StringField) tuple.get(0).getField(0)).toString();
+				}
+
+				for(int i=0; i<help.size(); i++) {
+					IntField valueIntA = (IntField) help.get(i).getField(0);
+					int actValueA = valueIntA.getValue();
+
+					for(int j=0; j<tuple.size(); j++) {
+						Type b = tuple.get(j).getDesc().getType(0);
+						if(b == Type.INT) {
+							IntField intValueB = (IntField) tuple.get(j).getField(0);
+							int actValueB = intValueB.getValue();
+							if(actValueB == actValueA) {
+								IntField intField = (IntField) tuple.get(j).getField(1);
+								int valuec = intField.getValue();
+								if(min > valuec) {
+									min = valuec;
+								}
+							}
+						}else {//String case
+							stringHelper(j, theString);
+						}
+					}
+					if(a.equals(Type.INT)) {
+						result.add(maxMinIntHelper(i, min));
+					}else {
+						result.add(maxMinStringHelper(i, theString));
+					}
+				}
+			}
+		}
+
+		if(agop == AggregateOperator.MAX) {
+
+			if(groupb == false) {
+				int max = Integer.MIN_VALUE;
+
+
+				String theString = "";
+				Type a = tuple.get(0).getField(0).getType();
+				if(!a.equals(Type.INT)) {
+					theString = ((StringField) tuple.get(0).getField(0)).toString();
+				}
+
+				for(int i=0; i<tuple.size(); i++) {
+					Type b = tuple.get(i).getDesc().getType(0);
+					if(b.equals(Type.STRING)) {
+						valueHelper(i, theString);
+					}
+					else {
+						IntField intField = new IntField(tuple.get(i).getField(0).toByteArray());
+						int actValue = intField.getValue();
+						if(max < actValue) {
+							max = actValue;
+						}
+					}
+				}
+
+				if(a.equals(Type.INT)) {
+					result.add(maxMinInt(max));
+				}else {
+					result.add(maxMinString(theString));
+				}
+			}else {
+				int max = Integer.MIN_VALUE;
+
+				String theString = "";
+				Type a = tuple.get(0).getField(0).getType();
+				if(!a.equals(Type.INT)) {
+
+					theString = ((StringField) tuple.get(0).getField(0)).toString();
+				}
+
+				for(int i=0; i<help.size(); i++) {
+					IntField valueIntA = (IntField) help.get(i).getField(0);
+					int actValueA = valueIntA.getValue();
+
+					for(int j=0; j<tuple.size(); j++) {
+						Type b = tuple.get(j).getDesc().getType(0);
+						if(b == Type.INT) {
+							IntField valueIntB = (IntField) tuple.get(j).getField(0);
+							int actValueB = valueIntB.getValue();
+
+							if(actValueB == actValueA) {
+								IntField intValueC = (IntField) tuple.get(j).getField(1);
+								int actValueC = intValueC.getValue();
+								if(max < actValueC) {
+									max = actValueC;
+								}
+							}
+						}else {
+							stringHelper(j, theString);
+						}
+					}
+
+
+					if(a.equals(Type.INT)) {
+						result.add(maxMinIntHelper(i, max));
+					}else {
+						result.add(maxMinStringHelper(i, theString));
+					}
+				}
+			}
+		}
+
+
+		return result;
 	}
+
+	private Tuple maxMinIntHelper(int i, int maxMin){
+
+		Tuple maxMinTup = new Tuple(tD);
+		maxMinTup.setField(0, help.get(i).getField(0));
+		IntField maxMinInt = new IntField(maxMin);
+		maxMinTup.setField(1, maxMinInt);
+		return maxMinTup;
+	}
+
+
+	private void valueHelper(int i, String theString) {
+		StringField value = (StringField) tuple.get(i).getField(0);
+		String theValue = value.toString();
+		if(theValue.compareTo(theString) == 1) {
+			theString = theValue;
+		}
+	}
+
+	private void stringHelper(int j, String theString) {
+		StringField stringField = (StringField) tuple.get(j).getField(1);
+		String stringValue = stringField.toString();
+		if(stringValue.compareTo(theString)==1) theString = stringValue;
+	}
+
+
+
+
+	private Tuple maxMinStringHelper(int i, String theString) {
+		Tuple maxMinTuple = new Tuple(tD);
+		maxMinTuple.setField(0, help.get(i).getField(0));
+		StringField maxMinString = new StringField(theString);
+		maxMinTuple.setField(1, maxMinString);
+		return maxMinTuple;
+	}	
+
+
+	private Tuple maxMinString(String firstValue) {
+		Tuple maxminTuple = new Tuple(tD);
+		StringField stringMaxmin = new StringField(firstValue);
+		maxminTuple.setField(0, stringMaxmin);
+		return maxminTuple;
+	}
+
+	private Tuple maxMinInt(int maxMin) {
+		Tuple maxMinTuple = new Tuple(tD);
+		IntField intMaxMin = new IntField(maxMin);
+		maxMinTuple.setField(0, intMaxMin);
+		return maxMinTuple;
+	}
+
+
+	private Tuple countHelper(int i, int given) {
+		
+		IntField a = new IntField(given);
+		
+		Tuple newTuple = new Tuple(tD);
+		newTuple.setField(0, help.get(i).getField(0));
+		newTuple.setField(1, a);
+		return newTuple;
+	}
+
+	private Tuple countHelperb(int given) {
+		IntField a = new IntField(given);
+		
+		Tuple newTuple = new Tuple(tD);
+		newTuple.setField(0, a);
+		return newTuple;
+	}
+
+	private void sumHelperInt(Tuple t, Map<Integer, Integer> name, ArrayList<Tuple> list) {
+		
+		int index = name.get(t.getField(0).hashCode());
+		Tuple temp = list.get(index);
+		IntField theIF = new IntField(t.getField(1).hashCode() + temp.getField(1).hashCode());
+
+		temp.setField(1, theIF);
+	}
+
+	private void sumHelperIntb(int i, ArrayList<Tuple> list, Map<Integer, Integer> name, TupleDesc newTD) {
+		Tuple newTuple = new Tuple(newTD);
+		newTuple.setField(0, tuple.get(i).getField(0));
+		newTuple.setField(1, tuple.get(i).getField(1));
+		list.add(newTuple);
+		name.put(newTuple.getField(0).hashCode(), list.size() - 1);
+	}
+	
+	private void sumHelperString(Tuple t, Map<String, Integer> nameSpace, ArrayList<Tuple> list) {
+		int index = nameSpace.get(t.getField(0).hashCode());
+		Tuple temp = list.get(index);
+		IntField theIF = new IntField(t.getField(1).hashCode() + temp.getField(1).hashCode());
+		temp.setField(1, theIF);
+	}
+
+	
+
+	private void sumHelperStringb(int i, ArrayList<Tuple> theList, Map<String, Integer> name, TupleDesc newTD) {
+		Tuple newTuple = new Tuple(newTD);
+		newTuple.setField(0, tuple.get(i).getField(0));
+		newTuple.setField(1, tuple.get(i).getField(1));
+		theList.add(newTuple);
+		name.put(newTuple.getField(0).toString(), theList.size() - 1);
+	}
+
 
 }

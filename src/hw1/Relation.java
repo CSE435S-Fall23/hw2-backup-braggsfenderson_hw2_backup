@@ -59,22 +59,29 @@ public class Relation {
 		//your code here
 
 		// for each field that needs to be renamed, rename it 
-
-
-
-
-
-		for (int i= 0; i< td.numFields(); i++) {
-			// if we are a field that needs to be renamed 
-			if (fields.contains(i)) {
-				String newName = names.get(i);
-
-
+		
+		
+		String[] newNames = new String[td.numFields()];
+		Type[] types = new Type[td.numFields()];
+		
+		TupleDesc newTD = new TupleDesc(types, newNames);
+		
+		for(int i = 0; i < td.numFields(); i++){
+			types[i] = td.getType(i);
+			newNames[i] = td.getFieldName(i);
+			
+			for(int j = 0; j < fields.size(); j++){
+				
+				if(fields.get(j) == i){
+					newNames[i] = names.get(j);
+					break;
+				}
 			}
 		}
+		
+		return new Relation(this.tuples, newTD);
 
-
-		return null;
+	
 	}
 
 	/**
@@ -187,7 +194,17 @@ public class Relation {
 	 */
 	public Relation aggregate(AggregateOperator op, boolean groupBy) {
 		//your code here
-		return null;
+		
+		Aggregator agg = new Aggregator(op, groupBy, td); 
+		
+		for(int i = 0; i < tuples.size(); i++){
+			agg.merge(tuples.get(i));
+			//System.out.println(tuples.get(i).toString());
+		}
+		ArrayList<Tuple> newtuples = agg.getResults();
+		
+		return new Relation(newtuples, td);
+	
 	}
 
 	public TupleDesc getDesc() {
@@ -206,6 +223,11 @@ public class Relation {
 	 */
 	public String toString() {
 		//your code here
-		return null;
+		
+		String theString = "";
+		for(int i = 0; i < tuples.size(); i++){
+			theString += tuples.get(i).toString() + "\n";
+		}
+		return theString;
 	}
 }
