@@ -245,30 +245,11 @@ public class Aggregator {
 				}
 
 				for(int i=0; i<help.size(); i++) {
-					IntField valueIntA = (IntField) help.get(i).getField(0);
-					int actValueA = valueIntA.getValue();
-
-					for(int j=0; j<tuple.size(); j++) {
-						Type y = tuple.get(j).getDesc().getType(0);
-						if(y == Type.INT) {
-							IntField intValueB = (IntField) tuple.get(j).getField(0);
-							int actValueB = intValueB.getValue();
-							if(actValueB == actValueA) {
-								IntField intField = (IntField) tuple.get(j).getField(1);
-								int valuec = intField.getValue();
-								if(min > valuec) {
-									min = valuec;
-								}
-							}
-						}
-						
-						else {
-							valueHelper(j, theString);
-						}
-					}
+		
 					if(x.equals(Type.INT)) {
 						result.add(maxMinIntHelper(i, min));
-					}else {
+					}
+					else {
 						result.add(maxMinStringHelper(i, theString));
 					}
 				}
@@ -305,29 +286,7 @@ public class Aggregator {
 				}
 
 				for(int i=0; i<help.size(); i++) {
-					IntField valueIntA = (IntField) help.get(i).getField(0);
-					int actValueA = valueIntA.getValue();
-
-					for(int j=0; j<tuple.size(); j++) {
-						Type y = tuple.get(j).getDesc().getType(0);
-						
-						if(y == Type.INT) {
-							IntField valueIntB = (IntField) tuple.get(j).getField(0);
-							int actValueB = valueIntB.getValue();
-
-							if(actValueB == actValueA) {
-								IntField intValueC = (IntField) tuple.get(j).getField(1);
-								int actValueC = intValueC.getValue();
-								if(max < actValueC) {
-									max = actValueC;
-								}
-							}
-						}else {
-							valueHelper(j, theString);
-						}
-					}
-
-
+					
 					if(x.equals(Type.INT)) {
 						result.add(maxMinIntHelper(i, max));
 					}else {
