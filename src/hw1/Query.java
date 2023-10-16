@@ -19,6 +19,12 @@ import net.sf.jsqlparser.statement.select.SelectBody;
 import net.sf.jsqlparser.statement.select.SelectItem;
 import net.sf.jsqlparser.util.TablesNamesFinder;
 
+
+//Authored by 
+//
+//Melena Braggs and Courtney Fenderson
+
+
 public class Query {
 
 	private String q;

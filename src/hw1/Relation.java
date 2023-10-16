@@ -3,6 +3,13 @@ package hw1;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+
+
+//Authored by 
+//
+//Melena Braggs and Courtney Fenderson
+
+
 /**
  * This class provides methods to perform relational algebra operations. It will be used
  * to implement SQL queries.
@@ -133,59 +140,7 @@ public class Relation {
 	 * @return
 	 */
 	public Relation join(Relation other, int field1, int field2) {
-		//your code here
 		
-		// bring things together from each relation
-		
-//		String[] joinNames = new String[td.numFields()+ other.td.numFields()]; 
-//		Type[] joinTypes = new Type[td.numFields() + other.td.numFields()]; 
-//		
-//		TupleDesc joinTD = new TupleDesc(joinTypes,joinNames); 
-//		
-//		
-//		
-//		for (int i = 0; i < td.numFields() + other.td.numFields(); i++) {
-//			
-//			if (i < td.numFields()) {
-//			joinNames[i] = td.getFieldName(i);
-//			
-//			joinTypes[i] = td.getType(i);
-//		}
-//			else {
-//				joinNames[i] = td.getFieldName(i-td.numFields());
-//				
-//				joinTypes[i] = td.getType(i-td.numFields());
-//			}
-//			
-//		}
-//			
-//		ArrayList<Tuple> newTuples = new ArrayList<>();
-//		
-//		for (Tuple t1: tuples) {
-//			for (Tuple t2: other.tuples) {
-//				if (t1.getField(field1).compare(RelationalOperator.EQ, t2.getField(field2))) {
-//					
-//					Tuple newTuple = new Tuple(joinTD);
-//					
-//					for (int i = 0; i < td.numFields() + other.td.numFields(); i++) {
-//						if (i < td.numFields()) {
-//						newTuple.setField(i, t1.getField(i));
-//						}
-//						
-//						else {
-//							newTuple.setField(i-td.numFields(), t1.getField(i-td.numFields())); 
-//						}
-//	
-//					} 
-//					
-//					newTuples.add(newTuple);
-//				}
-//			}
-//		}
-//			
-//		
-//		return new Relation(newTuples, joinTD);
-//	}
 		
 		String[] f1 = td.copyFields();
 		String[] f2 = other.td.copyFields();

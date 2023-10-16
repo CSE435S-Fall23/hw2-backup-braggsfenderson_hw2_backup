@@ -5,6 +5,12 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+
+//Authored by 
+//
+//Melena Braggs and Courtney Fenderson
+
+
 /**
  * A class to perform various aggregations, by accepting one tuple at a time
  * @author Doug Shook
