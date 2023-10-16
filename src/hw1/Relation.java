@@ -1,6 +1,7 @@
 package hw1;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * This class provides methods to perform relational algebra operations. It will be used
@@ -136,55 +137,82 @@ public class Relation {
 		
 		// bring things together from each relation
 		
-		String[] joinNames = new String[td.numFields()+ other.td.numFields()]; 
-		Type[] joinTypes = new Type[td.numFields() + other.td.numFields()]; 
+//		String[] joinNames = new String[td.numFields()+ other.td.numFields()]; 
+//		Type[] joinTypes = new Type[td.numFields() + other.td.numFields()]; 
+//		
+//		TupleDesc joinTD = new TupleDesc(joinTypes,joinNames); 
+//		
+//		
+//		
+//		for (int i = 0; i < td.numFields() + other.td.numFields(); i++) {
+//			
+//			if (i < td.numFields()) {
+//			joinNames[i] = td.getFieldName(i);
+//			
+//			joinTypes[i] = td.getType(i);
+//		}
+//			else {
+//				joinNames[i] = td.getFieldName(i-td.numFields());
+//				
+//				joinTypes[i] = td.getType(i-td.numFields());
+//			}
+//			
+//		}
+//			
+//		ArrayList<Tuple> newTuples = new ArrayList<>();
+//		
+//		for (Tuple t1: tuples) {
+//			for (Tuple t2: other.tuples) {
+//				if (t1.getField(field1).compare(RelationalOperator.EQ, t2.getField(field2))) {
+//					
+//					Tuple newTuple = new Tuple(joinTD);
+//					
+//					for (int i = 0; i < td.numFields() + other.td.numFields(); i++) {
+//						if (i < td.numFields()) {
+//						newTuple.setField(i, t1.getField(i));
+//						}
+//						
+//						else {
+//							newTuple.setField(i-td.numFields(), t1.getField(i-td.numFields())); 
+//						}
+//	
+//					} 
+//					
+//					newTuples.add(newTuple);
+//				}
+//			}
+//		}
+//			
+//		
+//		return new Relation(newTuples, joinTD);
+//	}
 		
-		TupleDesc joinTD = new TupleDesc(joinTypes,joinNames); 
+		String[] f1 = td.copyFields();
+		String[] f2 = other.td.copyFields();
 		
-		
-		
-		for (int i = 0; i < td.numFields() + other.td.numFields(); i++) {
-			
-			if (i < td.numFields()) {
-			joinNames[i] = td.getFieldName(i);
-			
-			joinTypes[i] = td.getType(i);
-		}
-			else {
-				joinNames[i] = td.getFieldName(i-td.numFields());
-				
-				joinTypes[i] = td.getType(i-td.numFields());
-			}
-			
-		}
-			
-		ArrayList<Tuple> newTuples = new ArrayList<>();
-		
-		for (Tuple t1: tuples) {
-			for (Tuple t2: other.tuples) {
-				if (t1.getField(field1).compare(RelationalOperator.EQ, t2.getField(field2))) {
-					
-					Tuple newTuple = new Tuple(joinTD);
-					
-					for (int i = 0; i < td.numFields() + other.td.numFields(); i++) {
-						if (i < td.numFields()) {
-						newTuple.setField(i, t1.getField(i));
-						}
-						
-						else {
-							newTuple.setField(i-td.numFields(), t1.getField(i-td.numFields())); 
-						}
+		Type[] t1 = td.copyTypes();
+		Type[] t2 = other.td.copyTypes();
 	
-					} 
-					
+		String[] fields = Arrays.copyOf(f1, f1.length + f2.length); 	//using java2 help for import of Arrays
+		System.arraycopy(f2, 0, fields, f1.length, f2.length); 
+		Type[]types = Arrays.copyOf(t1, t1.length + t2.length);
+		System.arraycopy(t2, 0, types, t1.length, t2.length);
+		
+		TupleDesc newTd = new TupleDesc(types, fields);
+		ArrayList<Tuple> newTuples = new ArrayList<>();
+		for (Tuple tup1: tuples) {
+			for (Tuple tup2: other.tuples) {
+				if (tup1.getField(field1).compare(RelationalOperator.EQ, tup2.getField(field2))) {
+					Tuple newTuple = new Tuple(newTd);
+					for (int i = 0; i < f1.length; i++) newTuple.setField(i, tup1.getField(i));
+					for (int i = 0; i < f2.length; i++) newTuple.setField(i, tup2.getField(i));
 					newTuples.add(newTuple);
 				}
 			}
 		}
-			
-		
-		return new Relation(newTuples, joinTD);
+		return new Relation(newTuples, newTd);
 	}
+	
 
 	/**
 	 * Performs an aggregation operation on a relation. See the lab write up for details.

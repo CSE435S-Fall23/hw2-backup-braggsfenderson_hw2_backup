@@ -31,7 +31,14 @@ public class TupleDesc {
 		//your code here
 		return this.fields.length;
 	}
-
+	
+	//added hw2
+	 public String[] copyFields() {
+	    	return this.fields;
+	    }
+	 public Type[] copyTypes() {
+	    	return this.types;
+	    }
 	/**
 	 * Gets the (possibly null) field name of the ith field of this TupleDesc.
 	 *
