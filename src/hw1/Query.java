@@ -42,7 +42,7 @@ public class Query {
 			e.printStackTrace();
 		}
 		Select selectStatement = (Select) statement;
-		PlainSelect sb = (PlainSelect)selectStatement.getSelectBody();
+		PlainSelect selBody = (PlainSelect)selectStatement.getSelectBody();
 		
 		
 		//your code here
@@ -50,15 +50,15 @@ public class Query {
 		Catalog cat = Database.getCatalog();
 		ColumnVisitor colVisitor = new ColumnVisitor();
 		TablesNamesFinder tablesNamesFinder = new TablesNamesFinder();
-		List<String> tableLi = tablesNamesFinder.getTableList(statement);
-		int tbId = cat.getTableId(tableLi.get(0));
+		List<String> tableList = tablesNamesFinder.getTableList(statement);
+		int tbId = cat.getTableId(tableList.get(0));
 		ArrayList<Tuple> tupleList = cat.getDbFile(tbId).getAllTuples();
 		TupleDesc originTd = cat.getTupleDesc(tbId);
 		Relation r = new Relation(tupleList, originTd); //current rel
 		
 		// bring together
 		Relation joinRel = r;
-		List<Join> joinLi = sb.getJoins();
+		List<Join> joinLi = selBody.getJoins();
 
 		if (joinLi != null) {
 			for (Join join : joinLi) {
@@ -91,8 +91,8 @@ public class Query {
 		// for where
 		Relation whereRel = joinRel;
 		WhereExpressionVisitor whereVisitor = new WhereExpressionVisitor();
-		if (sb.getWhere() != null) {
-			sb.getWhere().accept(whereVisitor);
+		if (selBody.getWhere() != null) {
+			selBody.getWhere().accept(whereVisitor);
 			whereRel = joinRel.select(joinRel.getDesc().nameToId(
 					whereVisitor.getLeft()),
 					whereVisitor.getOp(),
@@ -101,7 +101,7 @@ public class Query {
 
 		// selecting 
 		Relation selectRel = whereRel;
-		List<SelectItem> selectList = sb.getSelectItems();
+		List<SelectItem> selectList = selBody.getSelectItems();
 
 		ArrayList<Integer> projectFields = new ArrayList<Integer>();
 
@@ -123,7 +123,7 @@ public class Query {
 		selectRel = whereRel.project(projectFields);
 
 		// aggregate
-		boolean groupFlag = sb.getGroupByColumnReferences() != null;
+		boolean groupFlag = selBody.getGroupByColumnReferences() != null;
 		
 		Relation agg = colVisitor.isAggregate() ? 
 				selectRel.aggregate(colVisitor.getOp(), groupFlag) : selectRel;
