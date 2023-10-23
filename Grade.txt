@@ -1,0 +1,6 @@
+Some problem with Join Operation. The fields set in line 162 in your Relation class are overwritten in line 163.(-5)
+Wrong results for Aggregate MAX/MIN. I don't see where you did the comparison in your aggregator. (-4)
+Query does not support SQL keyword AS (-5).
+Query does not support join multiple tables. (-1)
+
+Grade: 85/100
